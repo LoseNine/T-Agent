@@ -1,33 +1,29 @@
-from twisted.internet import reactor
-from Tagent import Tagent,startlog
+from Tagent import Tclient,Execute
 
-class Tclient:
-    def __init__(self,url):
+class own_execute(Execute):
+    """
+        自定义execute
+    """
+    def __init__(self,agent,reactor):
         self.reactor=reactor
-        self.agent=Tagent(self.reactor,url=url)
+        super(own_execute, self).__init__(agent,reactor)
 
-    def run(self):
-        self.reactor.run()
+    def result(self,res):
+        print(res)
+        self.reactor.stop()
 
-    def startlog(self):
-        startlog()
+    def add_execute(self,d):
+        super(own_execute, self).add_execute(d)
+        d.addBoth(self.result)
 
-    def get(self):
-        self.agent.get()
 
-    def download(self,to):
-        self.agent.downpage(to)
-
-    def cookieRequest(self):
-        self.agent.cookieRequest()
-
-    def redirectRequest(self):
-        self.agent.redirectRequest()
-
-    def proxyRequest(self,address,port):
-        self.agent.proxyRequest(address,port)
+def app_execute(t,d):
+    exe=own_execute(t.agent,t.reactor)
+    exe.execute(d)
 
 if __name__ == '__main__':
-    t=Tclient("http://baidu.com")
-    t.get()
+    t=Tclient("http://97daimeng.com/vod-play-id-88733-src-1-num-3.html")
+    d=t.get()
+    #html=t.execute(d)
+    html=app_execute(t,d)
     t.run()

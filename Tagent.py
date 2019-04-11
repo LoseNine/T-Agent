@@ -53,22 +53,6 @@ class StringProducer(object):
     def stopProducing(self):
         pass
 
-class ResourcePrinter(Protocol):
-    def __init__(self, finished):
-        self.finished = finished
-
-    def connectionMade(self):
-        print('[INFO]connect made\n')
-
-    def dataReceived(self, data):
-        print('[INFO]html decode:\n')
-        print(data.decode('utf-8'))
-        #print('start code:\n', data)
-
-    def connectionLost(self, reason):
-        print('Finished receiving body:', reason.getErrorMessage())
-        self.finished.callback(None)
-
 class TredirectLimitAgent(client.RedirectAgent):
     """
         防止陷阱，限制最多30x重定向
@@ -99,10 +83,10 @@ class Tagent:
 
         if self.headers ==None:
             headers=TgerHeaders().get()
-            self.headers=Headers()
+            self.headers=Headers(headers)
             
             self.headers.setRawHeaders(b'accept',[b'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'])
-            # self.headers.setRawHeaders(b'Connection', [b'keep-alive'])
+
         if data!=None:
             self.body = StringProducer(data.encode('utf_?'))
         else:
@@ -119,20 +103,20 @@ class Tagent:
         for header, value in response.headers.getAllRawHeaders():
             print(header, value)
 
-    def printResource(self,response):
-        #print('printResource:\n',response)
-        print("[INFO]code:",response.code)
-        print('[INFO]phrase:',response.phrase)
-        print("[INFO]headers:",response.headers)
-        #print('[INFO]transport:', response._transport)
-        finished = Deferred()
-        response.deliverBody(ResourcePrinter(finished))
-        return finished
-
-    def printError(self,failure):
-        print("error:\n")
-        print(failure)
-        print(failure.value.reasons[0].printTraceback())
+    # def printResource(self,response):
+    #     print('[INFO]printResource:',response)
+    #     print("[INFO]code:",response.code)
+    #     print('[INFO]phrase:',response.phrase)
+    #     print("[INFO]headers:",response.headers)
+    #     print('[INFO]transport:', response._transport)
+    #     finished = Deferred()
+    #     response.deliverBody(ResourcePrinter(finished)) #所有response交给ResourcePrinter处理
+    #     return finished
+    #
+    # def printError(self,failure):
+    #     print("error:\n")
+    #     print(failure)
+    #     print(failure.value.reasons[0].printTraceback())
 
     def displayCookies(self,response, cookieJar):
         #print('Received response')
@@ -153,31 +137,31 @@ class Tagent:
         reactor.stop()
 
     def execute(self,d):
-        d.addCallbacks(self.printResource, self.printError)
-        d.addBoth(self.stop)
-    #     self.run()
-    #
-    # def run(self):
-    #     self.reactor.run()
+        # d.addCallbacks(self.printResource, self.printError)
+        # d.addBoth(self.stop)
+
+        texe=Execute(self.agent,self.reactor)
+
+        texe.execute(d)
 
     def get(self):
         agent=TredirectLimitAgent(self.agent)
         d = agent.request(method=b'GET', uri=self.url, headers=self.headers, bodyProducer=self.body)
-        self.execute(d)
+        return d
 
     def post(self):
         d=self.agent.request(method=b'POST',uri=self.url, headers=self.headers,bodyProducer=self.body)
-        self.execute(d)
+        return d
 
     def downpage(self,filename):
         client.downloadPage(url=self.url,file=filename)
         self.run()
 
     def contentDecodeRequest(self):
-        agent = ContentDecoderAgent(TredirectLimitAgent(self.agent))
+        agent = ContentDecoderAgent(TredirectLimitAgent(self.agent),['gzip',GzipDecoder])
         d=agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
         d.addCallback(self.display)
-        self.execute(d)
+        return d
 
     def cookieRequest(self):
         cookieJar = compat.cookielib.CookieJar()
@@ -186,20 +170,110 @@ class Tagent:
         d=agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
 
         d.addCallback(self.displayCookies, cookieJar)
-        self.execute(d)
+        return d
 
     def redirectRequest(self):
         agent=TredirectLimitAgent(self.agent)
-        agent=TredirectLimitAgent(self.agent)
         d=agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
-        self.execute(d)
+        return d
 
     def proxyRequest(self,ip,port):
         endpoint = TCP4ClientEndpoint(reactor, ip, port)
         agent = ProxyAgent(endpoint)
         d = agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
         d.addCallbacks(self.display)
-        self.execute(d)
+        return d
+
+class ResourcePrinter(Protocol):
+    def __init__(self, finished):
+        self.finished = finished
+        self.data=None
+
+    def connectionMade(self):
+        print('[INFO]connect made\n')
+
+    def dataReceived(self, data):
+        print('[INFO]html decode:\n')
+        print(data.decode('utf-8'))
+        self.data=data.decode('utf-8')
+
+    def connectionLost(self, reason):
+        print('Finished receiving body:', reason.getErrorMessage())
+
+        self.finished.callback(self.data)
+
+class Execute:
+
+    def __init__(self,agent,reactor):
+        self.agent=agent
+        self.reactor=reactor
+
+    def printResource(self,response):
+        """
+            等待response被ResourcePrinter接收完毕后返回
+            在connectionLost里callback启动，赋予finished初始值
+            结果被stop打印出来
+
+            :param response: IResponse
+            :return: Deferred()
+        """
+
+        print('[INFO]printResource:',response)
+        print("[INFO]code:",response.code)
+        print('[INFO]phrase:',response.phrase)
+        print("[INFO]headers:",response.headers)
+        print('[INFO]transport:', response._transport)
+
+        finished = Deferred()   #创建Deferred()
+
+        response.deliverBody(ResourcePrinter(finished)) #所有response交给ResourcePrinter处理
+
+        return finished
+
+    def printError(self,failure):
+        print("error:\n")
+        print(failure)
+        print(failure.value.reasons[0].printTraceback())
+
+    def stop(self, result):
+        print(result)
+        self.reactor.stop()
+
+    def add_execute(self,d):
+        d.addCallbacks(self.printResource, self.printError)
+
+    def execute(self, d):
+        d.addCallbacks(self.printResource, self.printError)
+        d.addBoth(self.stop)
+
+class Tclient:
+    def __init__(self,url):
+        self.reactor=reactor
+        self.agent=Tagent(self.reactor,url=url)
+
+    def run(self):
+        self.reactor.run()
+
+    def execute(self,d):
+        self.agent.execute(d)
+
+    def startlog(self,filename=None):
+        startlog(filename)
+
+    def get(self):
+        return self.agent.get()
+
+    def download(self,to):
+        self.agent.downpage(to)
+
+    def cookieRequest(self):
+        return self.agent.cookieRequest()
+
+    def redirectRequest(self):
+        return self.agent.redirectRequest()
+
+    def proxyRequest(self,address,port):
+        return self.agent.proxyRequest(address,port)
 
 def startlog(filename=None):
     if not filename:
