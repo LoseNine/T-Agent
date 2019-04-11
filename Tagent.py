@@ -139,7 +139,7 @@ class Tagent:
         #             TimeoutCall.cancel()
         #         return result
         # d.addBoth(gotResult)
-        return d
+        return self.execute(d)
         
 
 class Execute:
@@ -191,10 +191,6 @@ class Tclient:
 
     def stop(self):
         self.reactor.stop()
-
-    def execute(self,d):
-        e=self.agent.execute(d)
-        return e
 
     def startlog(self,filename=None):
         startlog(filename)

@@ -19,7 +19,7 @@ T-Agent 是一个对于Twisted Web Client的整合
 * randomHeader
 * verify
 
-* proxyRequest
+* <small>proxyRequest<small>
 
 ### 使用说明
 
@@ -32,7 +32,6 @@ T-Agent 是一个对于Twisted Web Client的整合
 def main(reactor, *args):
     t=Tclient(method='GET',url='http://baidu.com',timeout=3,verify=False)
     d=t.get()
-    d=t.execute(d)
     d.addCallback(print_result)
     return d
 ```
@@ -42,7 +41,6 @@ def main(reactor, *args):
 def main(reactor, *args):
     t=Tclient(method='POST',url='http://httpbin.org/post',data=json.dumps({"msg": "Twisted"}).encode('ascii'))
     d=t.post()
-    d=t.execute(d)
     d.addCallback(print_result)
     return d
 ```
