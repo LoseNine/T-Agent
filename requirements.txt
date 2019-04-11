@@ -1,0 +1,4 @@
+zope.interface==4.5.0
+Twisted==19.2.0
+pyOpenSSL==19.0.0
+zope==4.0b10
