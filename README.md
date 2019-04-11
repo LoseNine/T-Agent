@@ -1,7 +1,7 @@
-# T-Agent
+# Tagent
 Using the Twisted Web Client
 
-T-Agent 是一个对于Twisted Web Client的整合
+Tagent 是一个对于Twisted Web Client的整合
 
 实现类似requests的东西
 
