@@ -31,8 +31,8 @@ T-Agent 是一个对于Twisted Web Client的整合
 > 用于格式化headers
 
 # 注意！要包裹在 [] 而且是 byte
-class TgerHeaders:
+`class TgerHeaders:
     def __init__(self):
         self.headPool=[{b'User-Agent':[b'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.26 Safari/537.36 Core/1.63.6726.400 QQBrowser/10.2.2265.400']},
-                       {b'User-Agent': [b'Twisted WebBot'],}]
+                       {b'User-Agent': [b'Twisted WebBot'],}]`
 
