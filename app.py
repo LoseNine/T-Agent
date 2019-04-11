@@ -1,29 +1,17 @@
-from Tagent import Tclient,Execute
-import _utils
+from Tagent import Tclient
+from twisted.internet.task import react
+import json
 
-class own_execute(Execute):
-    """
-        自定义execute
-    """
-    def __init__(self,agent,reactor):
-        self.reactor=reactor
-        super(own_execute, self).__init__(agent,reactor)
+def print_result(result):
+    print('print result:\n')
+    print(result)
 
-    def result(self,res):
-        print(res)
-        self.reactor.stop()
+def main(reactor, *args):
+    t=Tclient(method='POST',url='http://httpbin.org/post',data=json.dumps({"msg": "Twisted"}).encode('ascii'))
+    d=t.post()
+    d=t.execute(d)
+    d.addCallback(print_result)
+    return d
 
-    def add_execute(self,d):
-        super(own_execute, self).add_execute(d)
-        d.addBoth(self.result)
+react(main, [])
 
-def app_execute(t,d):
-    exe=own_execute(t.agent,t.reactor)
-    exe.execute(d)
-
-if __name__ == '__main__':
-    t=Tclient(url="https://github.com")
-    d=t.get()
-    #html=t.execute(d)
-    html=app_execute(t,d)
-    t.run()
