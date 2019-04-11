@@ -8,6 +8,7 @@ from twisted.web.client import ProxyAgent
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from Theaders import TgerHeaders
 from twisted.python import log,compat
+from twisted.python import failure
 
 
 from IBody import StringProducer
@@ -35,12 +36,13 @@ class TcookieAgent(client.CookieAgent):
 
 
 class Tagent:
-    def __init__(self,reactor,url=None,method='GET',data=None,headers=None):
+    def __init__(self,reactor,url=None,method='GET',data=None,headers=None,timeout=None):
 
         self.reactor=reactor
         self.url=url.encode('utf_?')
         self.headers=headers
         self.method=method.encode('utf_?')
+        self.timeout=timeout
 
         if self.headers ==None:
             headers=TgerHeaders().get()
@@ -129,6 +131,14 @@ class Tagent:
         d=agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
 
         d.addCallback(self.displayCookies, cookieJar)
+
+        # if self.timeout:
+        #     TimeoutCall = self.reactor.callLater(self.timeout, d.cancel)
+        #     def gotResult(result):
+        #         if TimeoutCall.active():
+        #             TimeoutCall.cancel()
+        #         return result
+        # d.addBoth(gotResult)
         return d
         
 
@@ -169,12 +179,12 @@ class Execute:
         return e
 
 class Tclient:
-    def __init__(self,reactor=reactor,url=None,method='GET',data=None,headers=None,verify=False):
-        if verify:
+    def __init__(self,reactor=reactor,url=None,method='GET',data=None,headers=None,verify=True,timeout=None):
+        if not verify:
             import _utils
 
         self.reactor=reactor
-        self.agent=Tagent(self.reactor,url=url,data=data,method=method,headers=headers)
+        self.agent=Tagent(self.reactor,url=url,data=data,method=method,headers=headers,timeout=timeout)
 
     def run(self):
         self.reactor.run()
