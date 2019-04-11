@@ -3,6 +3,8 @@ Using the Twisted Web Client
 
 T-Agent 是一个对于Twisted Web Client的整合
 
+实现类似requests的东西
+
 ### 功能介绍
 
 目前实现
@@ -13,27 +15,36 @@ T-Agent 是一个对于Twisted Web Client的整合
 * contentDecodeRequest
 * cookieRequest    
 * redirectRequest 
-* proxyRequest
 * startlog
 * randomHeader
+* verify
 
-目前T-Agent里也只有三个小模块：
-
-* app
-* Tagent
-* Theaders
+* proxyRequest
 
 ### 使用说明
 
 ### Theaders
 
-> 用于格式化headers
+> 用于格式化headers，以及添加自定义的headers头部
 
-# 注意！要包裹在 [] 而且是 byte
+### App get
 ```python
-class TgerHeaders:
-    def __init__(self):
-        self.headPool=[{b'User-Agent':[b'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML,likeGecko)Chrome/63.0.3239.26Safari/537.36 Core/1.63.6726.400 QQBrowser/10.2.2265.400']},
-                       {b'User-Agent': [b'Twisted WebBot'],}]
+def main(reactor, *args):
+    t=Tclient(method='GET',url='http://baidu.com',timeout=3,verify=False)
+    d=t.get()
+    d=t.execute(d)
+    d.addCallback(print_result)
+    return d
 ```
+
+### App post
+```python
+def main(reactor, *args):
+    t=Tclient(method='POST',url='http://httpbin.org/post',data=json.dumps({"msg": "Twisted"}).encode('ascii'))
+    d=t.post()
+    d=t.execute(d)
+    d.addCallback(print_result)
+    return d
+```
+
 
