@@ -235,6 +235,7 @@ class Execute:
         print(failure)
         print(failure.value.reasons[0].printTraceback())
 
+
     def stop(self, result):
         print(result)
         self.reactor.stop()
@@ -263,8 +264,14 @@ class Tclient:
     def get(self):
         return self.agent.get()
 
+    def post(self):
+        return self.agent.post()
+
     def download(self,to):
         self.agent.downpage(to)
+
+    def getpage(self):
+        return client.getPage(url=self.agent.url)
 
     def cookieRequest(self):
         return self.agent.cookieRequest()
