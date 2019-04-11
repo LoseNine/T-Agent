@@ -36,13 +36,15 @@ class TcookieAgent(client.CookieAgent):
 
 
 class Tagent:
-    def __init__(self,reactor,url=None,method='GET',data=None,headers=None,timeout=None):
+    def __init__(self,reactor,url=None,method='GET',data=None,headers=None,timeout=None,ip=None,port=None):
 
         self.reactor=reactor
         self.url=url.encode('utf_?')
         self.headers=headers
         self.method=method.encode('utf_?')
         self.timeout=timeout
+        self.ip=ip
+        self.port=port
 
         if self.headers ==None:
             headers=TgerHeaders().get()
@@ -100,34 +102,14 @@ class Tagent:
     def downpage(self,filename):
         client.downloadPage(url=self.url,file=filename)
         self.run()
-
-    def contentDecodeRequest(self):
-        return self._request()
-
-
-    def cookieRequest(self):
-        return self._request()
-
-    def redirectRequest(self):
-        return self._request()
-
-
-    def proxyRequest(self,ip,port):
-        """
-            wait i do it : )
-        :param ip:
-        :param port:
-        :return:
-        """
-        endpoint = TCP4ClientEndpoint(reactor, ip, port)
-        agent = ProxyAgent(endpoint)
-        d = agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
-        d.addCallbacks(self.display)
-        return d
     
     def _request(self):
         cookieJar = compat.cookielib.CookieJar()
         agent = TredirectLimitAgent(TcookieAgent(self.agent,cookieJar))
+        if self.ip and self.port:
+            endpoint = TCP4ClientEndpoint(reactor, self.ip, self.port)
+            p = ProxyAgent(endpoint)
+            agent = TredirectLimitAgent(TcookieAgent(p, cookieJar))
         d=agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
 
         d.addCallback(self.displayCookies, cookieJar)
@@ -179,12 +161,22 @@ class Execute:
         return e
 
 class Tclient:
-    def __init__(self,reactor=reactor,url=None,method='GET',data=None,headers=None,verify=True,timeout=None):
+    def __init__(self,reactor=reactor,url=None,method='GET',data=None,headers=None,verify=True,timeout=None,**kwargs):
+        ip = None
+        port = None
+
         if not verify:
             import _utils
+        print(kwargs)
+        if 'proxy' in kwargs:
+
+            for k,v in kwargs['proxy'].items():
+                ip=k
+                port=v
 
         self.reactor=reactor
-        self.agent=Tagent(self.reactor,url=url,data=data,method=method,headers=headers,timeout=timeout)
+        self.agent=Tagent(self.reactor,url=url,data=data,method=method,
+                          headers=headers,timeout=timeout,ip=ip,port=port)
 
     def run(self):
         self.reactor.run()
@@ -207,14 +199,6 @@ class Tclient:
     def getpage(self):
         return client.getPage(url=self.agent.url)
 
-    def cookieRequest(self):
-        return self.agent.cookieRequest()
-
-    def redirectRequest(self):
-        return self.agent.redirectRequest()
-
-    def proxyRequest(self,address,port):
-        return self.agent.proxyRequest(address,port)
 
 def startlog(filename=None):
     if not filename:
