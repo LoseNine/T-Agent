@@ -10,30 +10,12 @@ T-Agent 是一个对于Twisted Web Client的整合
 * get
 * post
 * downpage
-* contentDecodeRequest：
-
-        Adds support for sending Accept-Encoding request headers and interpreting Content-Encoding response headers.
-        
-* cookieRequest：
-
-        Be used to store the cookie information.
-        
-* redirectRequest ：
-
-        Following redirects，it implements a rather strict behavior of the RFC.
-        
-* proxyRequest ：
-
-        Using a HTTP proxy.
-        
-        
-* startlog :
-
-        Start log.
-        
-* randomHeader : 
-
-        Random choice a User-Agent
+* contentDecodeRequest
+* cookieRequest    
+* redirectRequest 
+* proxyRequest
+* startlog
+* randomHeader
 
 目前T-Agent里也只有三个小模块：
 
