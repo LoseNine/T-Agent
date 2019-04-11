@@ -1,17 +1,33 @@
 from twisted.internet import reactor
 from Tagent import Tagent,startlog
 
-reactor=reactor
+class Tclient:
+    def __init__(self,url):
+        self.reactor=reactor
+        self.agent=Tagent(self.reactor,url=url)
 
-#打开日志
-#startlog()
+    def run(self):
+        self.reactor.run()
 
-t=Tagent(reactor=reactor,url='http://baidu.com')
+    def startlog(self):
+        startlog()
 
-#t.get()
-#t.downpage(filename='test.html')
-t.cookieRequest()
-#t.redirectRequest()
-#t.proxyRequest("117.141.155.242",53281)
+    def get(self):
+        self.agent.get()
 
-reactor.run()
+    def download(self,to):
+        self.agent.downpage(to)
+
+    def cookieRequest(self):
+        self.agent.cookieRequest()
+
+    def redirectRequest(self):
+        self.agent.redirectRequest()
+
+    def proxyRequest(self,address,port):
+        self.agent.proxyRequest(address,port)
+
+if __name__ == '__main__':
+    t=Tclient("http://baidu.com")
+    t.get()
+    t.run()

@@ -18,8 +18,8 @@ from zope.interface import implementer      #python3
 from Theaders import TgerHeaders
 from twisted.python import log,compat
 
-import OpenSSL
-from twisted.internet.ssl import SSL
+# import OpenSSL
+# from twisted.internet.ssl import SSL
 
 
 @implementer(IBodyProducer)
@@ -200,8 +200,6 @@ class Tagent:
         d = agent.request(method=self.method,uri=self.url, headers=self.headers,bodyProducer=self.body)
         d.addCallbacks(self.display)
         self.execute(d)
-
-
 
 def startlog(filename=None):
     if not filename:
